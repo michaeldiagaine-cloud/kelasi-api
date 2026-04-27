@@ -4,7 +4,7 @@ import { db } from '../config/db.js';
 export const saveRefreshToken = async (data: any) => {
     await db.query(
         `INSERT INTO refresh_tokens 
-        (id, "userId", token, "expiresAt", created_at)
+        (id, "userid", token, "expiresat", created_at)
         VALUES ($1, $2, $3, $4, NOW())`,
         [
             data.id,
