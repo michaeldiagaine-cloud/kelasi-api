@@ -1,28 +1,48 @@
-import type { CreateStudentDto, UpdateStudentDto } from '../dtos/student.dto.js';
+// src/services/student.service.ts
+
+import type {
+    CreateStudentDto,
+    UpdateStudentDto
+} from '../dtos/student.dto.js';
+
 import * as studentRepo from '../repositories/student.repository.js';
 
-export const createStudentService = async (data: CreateStudentDto) => {
+// CREATE
+export const createStudentService = async (
+    data: CreateStudentDto
+) => {
     return await studentRepo.createStudent(data);
 };
 
+// GET ALL
 export const getStudentsService = async () => {
     return await studentRepo.findStudents();
 };
 
-export const getStudentByIdService = async (id: string) => {
+// GET BY ID
+export const getStudentByIdService = async (
+    id: string
+) => {
     return await studentRepo.findStudentById(id);
 };
 
+// UPDATE
 export const updateStudentService = async (
     id: string,
     data: UpdateStudentDto
 ) => {
     const exists = await studentRepo.findStudentById(id);
-    if (!exists) return null;
+
+    if (!exists) {
+        return null;
+    }
 
     return await studentRepo.updateStudent(id, data);
 };
 
-export const deleteStudentService = async (id: string) => {
+// DELETE
+export const deleteStudentService = async (
+    id: string
+) => {
     return await studentRepo.deleteStudent(id);
 };

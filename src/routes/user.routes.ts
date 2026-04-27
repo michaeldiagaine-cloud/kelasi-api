@@ -20,17 +20,17 @@ const router = Router();
  *             required:
  *               - email
  *               - password
- *               - firstName
- *               - lastName
+ *               - firstname
+ *               - lastname
  *               - role
  *             properties:
  *               email:
  *                 type: string
  *               password:
  *                 type: string
- *               firstName:
+ *               firstname:
  *                 type: string
- *               lastName:
+ *               lastname:
  *                 type: string
  *               role:
  *                 type: string
@@ -45,6 +45,7 @@ const router = Router();
  *         description: Erreur de validation
  */
 router.post('/', authenticate, createUser);
+// router.post('/', createUser);
 
 /**
  * @swagger
@@ -68,9 +69,9 @@ router.post('/', authenticate, createUser);
  *                     type: string
  *                   email:
  *                     type: string
- *                   firstName:
+ *                   firstname:
  *                     type: string
- *                   lastName:
+ *                   lastname:
  *                     type: string
  *                   role:
  *                     type: string
@@ -136,9 +137,9 @@ router.get('/:id', authenticate, getUserById);
  *                     type: string
  *                   email:
  *                     type: string
- *                   firstName:
+ *                   firstname:
  *                     type: string
- *                   lastName:
+ *                   lastname:
  *                     type: string
  *                   role:
  *                     type: string
@@ -176,9 +177,9 @@ router.get('/school/:schoolId', authenticate, getUsersBySchool);
  *             properties:
  *               email:
  *                 type: string
- *               firstName:
+ *               firstname:
  *                 type: string
- *               lastName:
+ *               lastname:
  *                 type: string
  *               role:
  *                 type: string

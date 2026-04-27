@@ -1,3 +1,5 @@
+// src/repositories/studentClass.repository.ts
+
 import { db } from '../config/db.js';
 import { v4 as uuid } from 'uuid';
 
@@ -9,150 +11,228 @@ export const createStudentClass = async (data: {
     isActive: boolean;
 }) => {
     const id = uuid();
-    const now = new Date();
 
     await db.query(
-        `INSERT INTO student_classes 
-        (id, studentId, classId, academicYear, isActive, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `
+        INSERT INTO student_classes (
+            id,
+            "studentId",
+            "classId",
+            "academicYear",
+            "isActive",
+            created_at,
+            updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `,
         [
             id,
             data.studentId,
             data.classId,
             data.academicYear,
-            data.isActive,
-            now,
-            now
+            data.isActive
         ]
     );
 
-    return { id, ...data };
+    return {
+        id,
+        ...data
+    };
 };
 
 // GET ALL
 export const findStudentClasses = async () => {
-    const [rows]: any = await db.query(
-        `SELECT 
+    const result: any = await db.query(
+        `
+        SELECT
             sc.id,
-            sc.academicYear,
-            sc.isActive,
+            sc."academicYear",
+            sc."isActive",
 
-            sc.studentId,
-            sc.classId,
+            sc."studentId",
+            sc."classId",
 
             -- Student
-            s.studentCode,
-            u.firstName,
-            u.lastName,
-            CONCAT(u.firstName, ' ', u.lastName) AS studentName,
+            s."studentCode",
+            u."firstName",
+            u."lastName",
+            CONCAT(
+                u."firstName",
+                ' ',
+                u."lastName"
+            ) AS "studentName",
 
             -- Class
-            c.name AS className,
-            c.level AS classLevel,
+            c.name AS "className",
+            c.level AS "classLevel",
 
             -- School
-            sch.id AS schoolId,
-            sch.name AS schoolName
+            sch.id AS "schoolId",
+            sch.name AS "schoolName"
 
-         FROM student_classes sc
-         JOIN students s ON sc.studentId = s.id
-         JOIN users u ON s.userId = u.id
-         JOIN classes c ON sc.classId = c.id
-         JOIN schools sch ON c.schoolId = sch.id`
+        FROM student_classes sc
+        JOIN students s
+            ON sc."studentId" = s.id
+        JOIN users u
+            ON s."userId" = u.id
+        JOIN classes c
+            ON sc."classId" = c.id
+        JOIN schools sch
+            ON c."schoolId" = sch.id
+
+        ORDER BY sc.created_at DESC
+        `
     );
 
-    return rows;
+    return result.rows;
 };
 
 // GET BY ID
-export const findStudentClassById = async (id: string) => {
-    const [rows]: any = await db.query(
-        `SELECT * FROM student_classes WHERE id = ?`,
+export const findStudentClassById = async (
+    id: string
+) => {
+    const result: any = await db.query(
+        `
+        SELECT *
+        FROM student_classes
+        WHERE id = $1
+        `,
         [id]
     );
 
-    return rows[0] || null;
+    return result.rows[0] || null;
 };
 
 // GET BY STUDENT
-export const findByStudent = async (studentId: string) => {
-    const [rows]: any = await db.query(
-        `SELECT * FROM student_classes WHERE studentId = ?`,
+export const findByStudent = async (
+    studentId: string
+) => {
+    const result: any = await db.query(
+        `
+        SELECT *
+        FROM student_classes
+        WHERE "studentId" = $1
+        ORDER BY created_at DESC
+        `,
         [studentId]
     );
 
-    return rows;
+    return result.rows;
+};
+
+// GET BY CLASS
+export const findByClass = async (
+    classId: string
+) => {
+    const result: any = await db.query(
+        `
+        SELECT
+            sc.*,
+
+            CONCAT(
+                u."firstName",
+                ' ',
+                u."lastName"
+            ) AS "studentName",
+
+            c.name AS "className",
+            sch.name AS "schoolName"
+
+        FROM student_classes sc
+        JOIN students s
+            ON sc."studentId" = s.id
+        JOIN users u
+            ON s."userId" = u.id
+        JOIN classes c
+            ON sc."classId" = c.id
+        JOIN schools sch
+            ON c."schoolId" = sch.id
+
+        WHERE sc."classId" = $1
+
+        ORDER BY sc.created_at DESC
+        `,
+        [classId]
+    );
+
+    return result.rows;
+};
+
+// GET BY SCHOOL
+export const findBySchool = async (
+    schoolId: string
+) => {
+    const result: any = await db.query(
+        `
+        SELECT
+            sc.*,
+
+            CONCAT(
+                u."firstName",
+                ' ',
+                u."lastName"
+            ) AS "studentName",
+
+            c.name AS "className",
+            sch.name AS "schoolName"
+
+        FROM student_classes sc
+        JOIN students s
+            ON sc."studentId" = s.id
+        JOIN users u
+            ON s."userId" = u.id
+        JOIN classes c
+            ON sc."classId" = c.id
+        JOIN schools sch
+            ON c."schoolId" = sch.id
+
+        WHERE sch.id = $1
+
+        ORDER BY sc.created_at DESC
+        `,
+        [schoolId]
+    );
+
+    return result.rows;
 };
 
 // UPDATE
-export const updateStudentClass = async (id: string, data: any) => {
-    const now = new Date();
-
+export const updateStudentClass = async (
+    id: string,
+    data: any
+) => {
     await db.query(
-        `UPDATE student_classes 
-         SET classId = COALESCE(?, classId),
-             academicYear = COALESCE(?, academicYear),
-             isActive = COALESCE(?, isActive),
-             updated_at = ?
-         WHERE id = ?`,
+        `
+        UPDATE student_classes
+        SET
+            "classId" = COALESCE($1, "classId"),
+            "academicYear" = COALESCE($2, "academicYear"),
+            "isActive" = COALESCE($3, "isActive"),
+            updated_at = NOW()
+        WHERE id = $4
+        `,
         [
-            data.classId,
-            data.academicYear,
-            data.isActive,
-            now,
+            data.classId ?? null,
+            data.academicYear ?? null,
+            data.isActive ?? null,
             id
         ]
     );
 
-    return findStudentClassById(id);
+    return await findStudentClassById(id);
 };
 
 // DELETE
-export const deleteStudentClass = async (id: string) => {
-    const [result]: any = await db.query(
-        `DELETE FROM student_classes WHERE id = ?`,
+export const deleteStudentClass = async (
+    id: string
+) => {
+    const result: any = await db.query(
+        `
+        DELETE FROM student_classes
+        WHERE id = $1
+        `,
         [id]
     );
 
-    return result.affectedRows > 0;
-};
-
-export const findByClass = async (classId: string) => {
-    const [rows]: any = await db.query(
-        `SELECT 
-            sc.*,
-            CONCAT(u.firstName, ' ', u.lastName) AS studentName,
-            c.name AS className,
-            sch.name AS schoolName
-
-         FROM student_classes sc
-         JOIN students s ON sc.studentId = s.id
-         JOIN users u ON s.userId = u.id
-         JOIN classes c ON sc.classId = c.id
-         JOIN schools sch ON c.schoolId = sch.id
-         WHERE sc.classId = ?`,
-        [classId]
-    );
-
-    return rows;
-};
-
-export const findBySchool = async (schoolId: string) => {
-    const [rows]: any = await db.query(
-        `SELECT 
-            sc.*,
-            CONCAT(u.firstName, ' ', u.lastName) AS studentName,
-            c.name AS className,
-            sch.name AS schoolName
-
-         FROM student_classes sc
-         JOIN students s ON sc.studentId = s.id
-         JOIN users u ON s.userId = u.id
-         JOIN classes c ON sc.classId = c.id
-         JOIN schools sch ON c.schoolId = sch.id
-         WHERE sch.id = ?`,
-        [schoolId]
-    );
-
-    return rows;
+    return result.rowCount > 0;
 };

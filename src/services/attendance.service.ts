@@ -1,58 +1,98 @@
+// src/services/attendance.service.ts
+
 import * as repo from '../repositories/attendance.repository.js';
 
 // CREATE (ANTI-DOUBLON)
-export const createAttendanceService = async (data: any) => {
-    // vérifier doublon
-    const existing = await repo.findByClassAndDate(
-        data.classId,
-        data.date
-    );
+export const createAttendanceService = async (
+    data: any
+) => {
+    const existing =
+        await repo.findByClassAndDate(
+            data.classId,
+            data.date
+        );
 
     const already = existing.find(
-        (a: any) => a.studentId === data.studentId
+        (a: any) =>
+            a.studentId === data.studentId ||
+            a.studentId === data.studentId
     );
 
     if (already) {
-        throw new Error('Attendance already marked for this student');
+        throw new Error(
+            'Attendance already marked for this student'
+        );
     }
 
-    return repo.createAttendance(data);
+    return await repo.createAttendance(data);
 };
 
 // GET ALL
 export const getAttendanceService = async () => {
-    return repo.findAttendance();
+    return await repo.findAttendance();
 };
 
-export const getBySchoolService = (schoolId: string) =>
-    repo.findBySchool(schoolId);
+// GET BY SCHOOL
+export const getBySchoolService = async (
+    schoolId: string
+) => {
+    return await repo.findBySchool(schoolId);
+};
 
-export const getByClassService = (classId: string) =>
-    repo.findByClass(classId);
+// GET BY CLASS
+export const getByClassService = async (
+    classId: string
+) => {
+    return await repo.findByClass(classId);
+};
 
-export const getByDateService = (date: string) =>
-    repo.findByDate(date);
+// GET BY DATE
+export const getByDateService = async (
+    date: string
+) => {
+    return await repo.findByDate(date);
+};
 
-export const getByYearService = (year: string) =>
-    repo.findByAcademicYear(year);
+// GET BY YEAR
+export const getByYearService = async (
+    year: string
+) => {
+    return await repo.findByAcademicYear(year);
+};
 
+// GET BY STUDENT
 export const getByStudentService = async (
     studentId: string,
     filters: any
 ) => {
-    return repo.findByStudent(studentId, filters);
+    return await repo.findByStudent(
+        studentId,
+        filters
+    );
 };
 
-export const getAttendanceWithFiltersService = async (filters: any) => {
-    return repo.findWithFilters(filters);
-};
+// FILTERS
+export const getAttendanceWithFiltersService =
+    async (filters: any) => {
+        return await repo.findWithFilters(
+            filters
+        );
+    };
 
 // UPDATE
-export const updateAttendanceService = async (id: string, data: any) => {
-    return repo.updateAttendance(id, data);
+export const updateAttendanceService = async (
+    id: string,
+    data: any
+) => {
+    return await repo.updateAttendance(
+        id,
+        data
+    );
 };
 
 // DELETE
-export const deleteAttendanceService = async (id: string) => {
-    return repo.deleteAttendance(id);
+export const deleteAttendanceService = async (
+    id: string
+) => {
+    return await repo.deleteAttendance(id);
 };

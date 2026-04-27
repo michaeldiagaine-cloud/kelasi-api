@@ -1,3 +1,5 @@
+// src/services/school.service.ts
+
 import {
     createSchoolRepo,
     getSchoolsRepo,
@@ -11,7 +13,9 @@ export const createSchoolService = async (data: {
     name: string;
     code: string;
 }) => {
-    // 👉 logique métier possible ici (ex: vérifier unicité)
+    // 🔥 Vérification métier possible ici
+    // exemple : vérifier si le code existe déjà
+
     return await createSchoolRepo(data);
 };
 
@@ -25,14 +29,28 @@ export const getSchoolByIdService = async (id: string) => {
 
 export const updateSchoolService = async (
     id: string,
-    data: { name?: string; code?: string }
+    data: {
+        name?: string;
+        code?: string;
+    }
 ) => {
+    // 🔥 Vérifier si l’école existe
     const exists = await getSchoolByIdRepo(id);
-    if (!exists) return null;
 
-    await updateSchoolRepo(id, data);
+    if (!exists) {
+        return null;
+    }
 
-    return { id, ...data };
+    const updated = await updateSchoolRepo(id, data);
+
+    if (!updated) {
+        return null;
+    }
+
+    return {
+        id,
+        ...data
+    };
 };
 
 export const deleteSchoolService = async (id: string) => {

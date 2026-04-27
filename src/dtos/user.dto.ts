@@ -8,16 +8,16 @@ export type UserRole =
 export interface CreateUserDto {
     email: string;
     password: string; // ⚠️ password brut (service va hash)
-    firstName: string;
-    lastName: string;
+    firstname: string;
+    lastname: string;
     role: UserRole;
     schoolId?: string | null;
 }
 
 export interface UpdateUserDto {
     email?: string;
-    firstName?: string;
-    lastName?: string;
+    firstname?: string;
+    lastname?: string;
     role?: UserRole;
     schoolId?: string | null;
 }

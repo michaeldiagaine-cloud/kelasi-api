@@ -4,25 +4,35 @@ import { db } from '../config/db.js';
 export const saveRefreshToken = async (data: any) => {
     await db.query(
         `INSERT INTO refresh_tokens 
-        (id, userId, token, expiresAt, created_at)
-        VALUES (?, ?, ?, ?, NOW())`,
-        [data.id, data.userId, data.token, data.expiresAt]
+        (id, "userId", token, "expiresAt", created_at)
+        VALUES ($1, $2, $3, $4, NOW())`,
+        [
+            data.id,
+            data.userId,
+            data.token,
+            data.expiresAt
+        ]
     );
 };
 
 // FIND
 export const findRefreshToken = async (token: string) => {
-    const [rows]: any = await db.query(
-        `SELECT * FROM refresh_tokens WHERE token = ?`,
+    const result: any = await db.query(
+        `SELECT * 
+         FROM refresh_tokens 
+         WHERE token = $1`,
         [token]
     );
-    return rows[0];
+
+    return result.rows[0];
 };
 
 // REVOKE
 export const revokeRefreshToken = async (token: string) => {
     await db.query(
-        `UPDATE refresh_tokens SET isRevoked = 1 WHERE token = ?`,
+        `UPDATE refresh_tokens
+         SET "isRevoked" = TRUE
+         WHERE token = $1`,
         [token]
     );
 };

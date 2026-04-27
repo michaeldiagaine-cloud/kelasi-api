@@ -33,11 +33,6 @@ const options = {
         path.join(process.cwd(), 'src/routes/*.ts'),
         path.join(process.cwd(), 'dist/routes/*.js'),
     ],
-    // apis: ['./src/routes/*.ts'],
-    // apis: [
-    //     './src/routes/*.ts',
-    //     './dist/routes/*.js'
-    // ],
 };
 
 const specs = swaggerJsdoc(options);

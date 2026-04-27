@@ -1,31 +1,51 @@
+// src/services/announcement.service.ts
+
 import { db } from '../config/db.js';
 import * as repo from '../repositories/announcement.repository.js';
 
-export const createAnnouncementService = (data: any) =>
-    repo.createAnnouncement(data);
+// CREATE
+export const createAnnouncementService = async (
+    data: any
+) => {
+    return await repo.createAnnouncement(data);
+};
 
-export const getAnnouncementsService = () =>
-    repo.findAnnouncements();
+// GET ALL
+export const getAnnouncementsService = async () => {
+    return await repo.findAnnouncements();
+};
 
-export const getBySchoolService = (schoolId: string) =>
-    repo.findBySchool(schoolId);
+// GET BY SCHOOL
+export const getBySchoolService = async (
+    schoolId: string
+) => {
+    return await repo.findBySchool(schoolId);
+};
 
+// GET MY ANNOUNCEMENTS
 export const getMyAnnouncementsService = async (
     userId: string,
     read?: string
 ) => {
-    // 🔐 1. Vérifier userId
+    // sécurité
     if (!userId) {
         throw new Error('Unauthorized');
     }
 
-    // 🔥 2. Récupérer user
-    const [userRows]: any = await db.query(
-        `SELECT id, schoolId, role FROM users WHERE id = ?`,
+    // récupérer user
+    const userResult: any = await db.query(
+        `
+        SELECT
+            id,
+            "schoolId",
+            role
+        FROM users
+        WHERE id = $1
+        `,
         [userId]
     );
 
-    const user = userRows[0];
+    const user = userResult.rows[0];
 
     if (!user) {
         throw new Error('User not found');
@@ -35,57 +55,81 @@ export const getMyAnnouncementsService = async (
     let classIds: string[] = [];
 
     // ======================
-    // 👨‍👩‍👧‍👦 PARENT
+    // PARENT
     // ======================
+
     if (user.role === 'PARENT') {
-        const [children]: any = await db.query(
-            `SELECT studentId FROM parent_students WHERE parentId = ?`,
-            [userId]
-        );
-
-        studentIds = children.map((c: any) => c.studentId);
-
-        if (studentIds.length > 0) {
-            const [classes]: any = await db.query(
-                `SELECT classId FROM student_classes 
-                 WHERE studentId IN (?) AND isActive = 1`,
-                [studentIds]
+        const childrenResult: any =
+            await db.query(
+                `
+                SELECT "studentId"
+                FROM parent_students
+                WHERE "parentId" = $1
+                `,
+                [userId]
             );
 
-            classIds = classes.map((c: any) => c.classId);
+        studentIds = childrenResult.rows.map(
+            (c: any) => c.studentId
+        );
+
+        if (studentIds.length > 0) {
+            const classesResult: any =
+                await db.query(
+                    `
+                    SELECT "classId"
+                    FROM student_classes
+                    WHERE "studentId" = ANY($1)
+                    AND "isActive" = true
+                    `,
+                    [studentIds]
+                );
+
+            classIds = classesResult.rows.map(
+                (c: any) => c.classId
+            );
         }
     }
 
     // ======================
-    // 🎓 STUDENT
+    // STUDENT
     // ======================
-    if (user.role === 'STUDENT') {
-        // ⚠️ récupérer le vrai studentId
-        const [studentRows]: any = await db.query(
-            `SELECT id FROM students WHERE userId = ?`,
-            [userId]
-        );
 
-        const student = studentRows[0];
+    if (user.role === 'STUDENT') {
+        const studentResult: any =
+            await db.query(
+                `
+                SELECT id
+                FROM students
+                WHERE "userId" = $1
+                `,
+                [userId]
+            );
+
+        const student =
+            studentResult.rows[0];
 
         if (student) {
             studentIds = [student.id];
 
-            const [classes]: any = await db.query(
-                `SELECT classId FROM student_classes 
-                 WHERE studentId = ? AND isActive = 1`,
-                [student.id]
-            );
+            const classesResult: any =
+                await db.query(
+                    `
+                    SELECT "classId"
+                    FROM student_classes
+                    WHERE "studentId" = $1
+                    AND "isActive" = true
+                    `,
+                    [student.id]
+                );
 
-            classIds = classes.map((c: any) => c.classId);
+            classIds = classesResult.rows.map(
+                (c: any) => c.classId
+            );
         }
     }
 
-    // ======================
-    // 🛡️ SÉCURITÉ SQL
-    // ======================
-
-    // éviter IN ()
+    // sécurité SQL
     if (studentIds.length === 0) {
         studentIds = ['__NONE__'];
     }
@@ -94,10 +138,7 @@ export const getMyAnnouncementsService = async (
         classIds = ['__NONE__'];
     }
 
-    // ======================
-    // 🚀 RESULTAT
-    // ======================
-    return repo.findForUserWithReadFilter(
+    return await repo.findForUserWithReadFilter(
         userId,
         user.schoolId,
         classIds,
@@ -106,12 +147,20 @@ export const getMyAnnouncementsService = async (
     );
 };
 
+// MARK AS READ
 export const markAsReadService = async (
     announcementId: string,
     userId: string
 ) => {
-    return repo.markAsRead(announcementId, userId);
+    return await repo.markAsRead(
+        announcementId,
+        userId
+    );
 };
 
-export const deleteAnnouncementService = (id: string) =>
-    repo.deleteAnnouncement(id);
+// DELETE
+export const deleteAnnouncementService = async (
+    id: string
+) => {
+    return await repo.deleteAnnouncement(id);
+};

@@ -1,3 +1,5 @@
+// src/repositories/schoolPrincipal.repository.ts
+
 import { db } from '../config/db.js';
 import { v4 as uuid } from 'uuid';
 
@@ -9,72 +11,107 @@ export const createPrincipal = async (data: {
     isActive: boolean;
 }) => {
     const id = uuid();
-    const now = new Date();
 
     await db.query(
-        `INSERT INTO school_principals
-        (id, userId, schoolId, startDate, isActive, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [id, data.userId, data.schoolId, data.startDate, data.isActive, now, now]
+        `
+        INSERT INTO school_principals (
+            id,
+            "userId",
+            "schoolId",
+            "startDate",
+            "isActive",
+            created_at,
+            updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `,
+        [
+            id,
+            data.userId,
+            data.schoolId,
+            data.startDate,
+            data.isActive
+        ]
     );
 
-    return { id, ...data };
+    return {
+        id,
+        ...data
+    };
 };
 
 // GET ALL (ENRICHI)
 export const findPrincipals = async () => {
-    const [rows]: any = await db.query(
-        `SELECT 
+    const result: any = await db.query(
+        `
+        SELECT
             sp.*,
-            CONCAT(u.firstName, ' ', u.lastName) AS principalName,
-            s.name AS schoolName
-
-         FROM school_principals sp
-         JOIN users u ON sp.userId = u.id
-         JOIN schools s ON sp.schoolId = s.id`
+            CONCAT(u."firstName", ' ', u."lastName") AS "principalName",
+            s.name AS "schoolName"
+        FROM school_principals sp
+        JOIN users u
+            ON sp."userId" = u.id
+        JOIN schools s
+            ON sp."schoolId" = s.id
+        ORDER BY sp.created_at DESC
+        `
     );
 
-    return rows;
+    return result.rows;
 };
 
 // GET BY SCHOOL
 export const findBySchool = async (schoolId: string) => {
-    const [rows]: any = await db.query(
-        `SELECT 
+    const result: any = await db.query(
+        `
+        SELECT
             sp.*,
-            CONCAT(u.firstName, ' ', u.lastName) AS principalName
-
-         FROM school_principals sp
-         JOIN users u ON sp.userId = u.id
-         WHERE sp.schoolId = ?`,
+            CONCAT(u."firstName", ' ', u."lastName") AS "principalName"
+        FROM school_principals sp
+        JOIN users u
+            ON sp."userId" = u.id
+        WHERE sp."schoolId" = $1
+        ORDER BY sp.created_at DESC
+        `,
         [schoolId]
     );
 
-    return rows;
+    return result.rows;
 };
 
 // UPDATE
-export const updatePrincipal = async (id: string, data: any) => {
-    const now = new Date();
-
+export const updatePrincipal = async (
+    id: string,
+    data: any
+) => {
     await db.query(
-        `UPDATE school_principals 
-         SET isActive = COALESCE(?, isActive),
-             endDate = COALESCE(?, endDate),
-             updated_at = ?
-         WHERE id = ?`,
-        [data.isActive, data.endDate, now, id]
+        `
+        UPDATE school_principals
+        SET
+            "isActive" = COALESCE($1, "isActive"),
+            "endDate" = COALESCE($2, "endDate"),
+            updated_at = NOW()
+        WHERE id = $3
+        `,
+        [
+            data.isActive ?? null,
+            data.endDate ?? null,
+            id
+        ]
     );
 
-    return findPrincipals();
+    return await findPrincipals();
 };
 
 // DELETE
 export const deletePrincipal = async (id: string) => {
-    const [result]: any = await db.query(
-        `DELETE FROM school_principals WHERE id = ?`,
+    const result: any = await db.query(
+        `
+        DELETE FROM school_principals
+        WHERE id = $1
+        `,
         [id]
     );
 
-    return result.affectedRows > 0;
+    return result.rowCount > 0;
 };

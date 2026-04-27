@@ -1,3 +1,5 @@
+// src/services/studentClass.service.ts
+
 import * as repo from '../repositories/studentClass.repository.js';
 import type {
     CreateStudentClassDto,
@@ -8,41 +10,63 @@ import type {
 export const createStudentClassService = async (
     data: CreateStudentClassDto
 ) => {
-    // règle métier : une seule classe active
-    if (data.isActive) {
-        const existing = await repo.findByStudent(data.studentId);
+    // règle métier :
+    // un élève ne peut avoir
+    // qu'une seule classe active
 
-        const active = existing.find((c: any) => c.isActive);
+    if (data.isActive !== false) {
+        const existing = await repo.findByStudent(
+            data.studentId
+        );
+
+        const active = existing.find(
+            (c: any) => c.isActive === true
+        );
 
         if (active) {
-            throw new Error('Student already has an active class');
+            throw new Error(
+                'Student already has an active class'
+            );
         }
     }
 
-    return repo.createStudentClass({
+    return await repo.createStudentClass({
         ...data,
         isActive: data.isActive ?? true
     });
 };
 
 // GET ALL
-export const getByClassService = async (classId: string) => {
-    return repo.findByClass(classId);
-};
-
-// GET BY 
-export const getBySchoolService = async (schoolId: string) => {
-    return repo.findBySchool(schoolId);
+export const getStudentClassesService = async () => {
+    return await repo.findStudentClasses();
 };
 
 // GET BY ID
-export const getStudentClassByIdService = async (id: string) => {
-    return repo.findStudentClassById(id);
+export const getStudentClassByIdService = async (
+    id: string
+) => {
+    return await repo.findStudentClassById(id);
 };
 
 // GET BY STUDENT
-export const getByStudentService = async (studentId: string) => {
-    return repo.findByStudent(studentId);
+export const getByStudentService = async (
+    studentId: string
+) => {
+    return await repo.findByStudent(studentId);
+};
+
+// GET BY CLASS
+export const getByClassService = async (
+    classId: string
+) => {
+    return await repo.findByClass(classId);
+};
+
+// GET BY SCHOOL
+export const getBySchoolService = async (
+    schoolId: string
+) => {
+    return await repo.findBySchool(schoolId);
 };
 
 // UPDATE
@@ -50,13 +74,22 @@ export const updateStudentClassService = async (
     id: string,
     data: UpdateStudentClassDto
 ) => {
-    const exists = await repo.findStudentClassById(id);
-    if (!exists) return null;
+    const exists =
+        await repo.findStudentClassById(id);
 
-    return repo.updateStudentClass(id, data);
+    if (!exists) {
+        return null;
+    }
+
+    return await repo.updateStudentClass(
+        id,
+        data
+    );
 };
 
 // DELETE
-export const deleteStudentClassService = async (id: string) => {
-    return repo.deleteStudentClass(id);
+export const deleteStudentClassService = async (
+    id: string
+) => {
+    return await repo.deleteStudentClass(id);
 };

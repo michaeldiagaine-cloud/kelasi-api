@@ -1,11 +1,30 @@
+// src/repositories/homework.repository.ts
+
 import { db } from '../config/db.js';
 
 // CREATE
 export const createHomework = async (data: any) => {
     await db.query(
-        `INSERT INTO homeworks 
-        (id, title, description, subject, dueDate, attachments, classId, teacherId, academicYear, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        `
+        INSERT INTO homeworks (
+            id,
+            title,
+            description,
+            subject,
+            "dueDate",
+            attachments,
+            "classId",
+            "teacherId",
+            "academicYear",
+            created_at,
+            updated_at
+        )
+        VALUES (
+            $1, $2, $3, $4, $5,
+            $6, $7, $8, $9,
+            NOW(), NOW()
+        )
+        `,
         [
             data.id,
             data.title,
@@ -24,93 +43,136 @@ export const createHomework = async (data: any) => {
 
 // GET ALL
 export const findHomeworks = async () => {
-    const [rows]: any = await db.query(`SELECT * FROM homeworks`);
-    return rows;
+    const result: any = await db.query(`
+        SELECT * 
+        FROM homeworks
+        ORDER BY "dueDate" ASC
+    `);
+
+    return result.rows.map((row: any) => ({
+        ...row,
+        attachments: JSON.parse(row.attachments || '[]')
+    }));
 };
 
-// GET BY CLASSES (IMPORTANT)
+// GET BY CLASSES
 export const findByClasses = async (classIds: string[]) => {
-    const [rows]: any = await db.query(
-        `SELECT 
+    const result: any = await db.query(
+        `
+        SELECT
             h.*,
-            c.name AS className,
-            CONCAT(u.firstName,' ',u.lastName) AS teacherName
+            c.name AS "className",
+            CONCAT(
+                u."firstName",
+                ' ',
+                u."lastName"
+            ) AS "teacherName"
 
-         FROM homeworks h
-         JOIN classes c ON h.classId = c.id
-         JOIN users u ON h.teacherId = u.id
+        FROM homeworks h
+        JOIN classes c
+            ON h."classId" = c.id
+        JOIN users u
+            ON h."teacherId" = u.id
 
-         WHERE h.classId IN (?)
-         ORDER BY h.dueDate ASC`,
+        WHERE h."classId" = ANY($1)
+
+        ORDER BY h."dueDate" ASC
+        `,
         [classIds]
     );
 
-    return rows;
+    return result.rows.map((row: any) => ({
+        ...row,
+        attachments: JSON.parse(row.attachments || '[]')
+    }));
 };
 
+// FILTERS
 export const findWithFilters = async (filters: any) => {
     let query = `
-        SELECT 
+        SELECT
             h.*,
-            c.name AS className,
-            sch.name AS schoolName,
-            CONCAT(u.firstName,' ',u.lastName) AS teacherName
+            c.name AS "className",
+            sch.name AS "schoolName",
+            CONCAT(
+                u."firstName",
+                ' ',
+                u."lastName"
+            ) AS "teacherName"
 
         FROM homeworks h
-        JOIN classes c ON h.classId = c.id
-        JOIN schools sch ON c.schoolId = sch.id
-        JOIN users u ON h.teacherId = u.id
+        JOIN classes c
+            ON h."classId" = c.id
+        JOIN schools sch
+            ON c."schoolId" = sch.id
+        JOIN users u
+            ON h."teacherId" = u.id
 
         WHERE 1=1
     `;
 
     const values: any[] = [];
+    let index = 1;
 
     if (filters.schoolId) {
-        query += ` AND sch.id = ?`;
+        query += ` AND sch.id = $${index}`;
         values.push(filters.schoolId);
+        index++;
     }
 
     if (filters.classId) {
-        query += ` AND h.classId = ?`;
+        query += ` AND h."classId" = $${index}`;
         values.push(filters.classId);
+        index++;
     }
 
     if (filters.academicYear) {
-        query += ` AND h.academicYear = ?`;
+        query += ` AND h."academicYear" = $${index}`;
         values.push(filters.academicYear);
+        index++;
     }
 
     if (filters.date) {
-        query += ` AND DATE(h.dueDate) = ?`;
+        query += ` AND DATE(h."dueDate") = $${index}`;
         values.push(filters.date);
+        index++;
     }
 
-    query += ` ORDER BY h.dueDate ASC`;
+    query += ` ORDER BY h."dueDate" ASC`;
 
-    const [rows]: any = await db.query(query, values);
+    const result: any = await db.query(query, values);
 
-    return rows;
+    return result.rows.map((row: any) => ({
+        ...row,
+        attachments: JSON.parse(row.attachments || '[]')
+    }));
 };
 
-
 // UPDATE
-export const updateHomework = async (id: string, data: any) => {
+export const updateHomework = async (
+    id: string,
+    data: any
+) => {
     await db.query(
-        `UPDATE homeworks SET
-            title = COALESCE(?, title),
-            description = COALESCE(?, description),
-            subject = COALESCE(?, subject),
-            dueDate = COALESCE(?, dueDate),
-            attachments = COALESCE(?, attachments),
+        `
+        UPDATE homeworks
+        SET
+            title = COALESCE($1, title),
+            description = COALESCE($2, description),
+            subject = COALESCE($3, subject),
+            "dueDate" = COALESCE($4, "dueDate"),
+            attachments = COALESCE($5, attachments),
             updated_at = NOW()
-        WHERE id = ?`,
+        WHERE id = $6
+        `,
         [
-            data.title,
-            data.description,
-            data.subject,
-            data.dueDate,
-            data.attachments ? JSON.stringify(data.attachments) : null,
+            data.title ?? null,
+            data.description ?? null,
+            data.subject ?? null,
+            data.dueDate ?? null,
+            data.attachments
+                ? JSON.stringify(data.attachments)
+                : null,
             id
         ]
     );
@@ -119,11 +181,16 @@ export const updateHomework = async (id: string, data: any) => {
 };
 
 // DELETE
-export const deleteHomework = async (id: string) => {
-    const [result]: any = await db.query(
-        `DELETE FROM homeworks WHERE id = ?`,
+export const deleteHomework = async (
+    id: string
+) => {
+    const result: any = await db.query(
+        `
+        DELETE FROM homeworks
+        WHERE id = $1
+        `,
         [id]
     );
 
-    return result.affectedRows > 0;
+    return result.rowCount > 0;
 };

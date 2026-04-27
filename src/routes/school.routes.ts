@@ -51,6 +51,7 @@ const router = Router();
  *         description: Nom ou code manquant
  */
 router.post('/', authenticate, createSchool);
+// router.post('/', createSchool);
 
 /**
  * @swagger

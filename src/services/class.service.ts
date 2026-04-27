@@ -1,7 +1,11 @@
 // src/services/class.service.ts
-// src/services/class.service.ts
+
 import { randomUUID } from 'crypto';
-import type { CreateClassDto, UpdateClassDto } from '../dtos/class.dto.js';
+import type {
+    CreateClassDto,
+    UpdateClassDto
+} from '../dtos/class.dto.js';
+
 import {
     createClass,
     findClasses,
@@ -12,13 +16,23 @@ import {
 } from '../repositories/class.repository.js';
 
 // CREATE
-export const createClassService = async (data: CreateClassDto) => {
+export const createClassService = async (
+    data: CreateClassDto
+) => {
     const id = randomUUID();
 
+    // vérifier si une classe avec le même nom existe déjà
     const existing = await findClassesBySchool(data.schoolId);
 
-    if (existing.some((c: { name: string }) => c.name === data.name)) {
-        throw new Error('Class already exists in this school');
+    if (
+        existing.some(
+            (c: { name: string }) =>
+                c.name.toLowerCase() === data.name.toLowerCase()
+        )
+    ) {
+        throw new Error(
+            'Class already exists in this school'
+        );
     }
 
     const classToCreate = {
@@ -39,19 +53,29 @@ export const getClassesService = async () => {
 };
 
 // GET BY ID
-export const getClassByIdService = async (id: string) => {
+export const getClassByIdService = async (
+    id: string
+) => {
     return await findClassById(id);
 };
 
 // GET BY SCHOOL
-export const getClassesBySchoolService = async (schoolId: string) => {
+export const getClassesBySchoolService = async (
+    schoolId: string
+) => {
     return await findClassesBySchool(schoolId);
 };
 
 // UPDATE
-export const updateClassService = async (id: string, data: UpdateClassDto) => {
+export const updateClassService = async (
+    id: string,
+    data: UpdateClassDto
+) => {
     const exists = await findClassById(id);
-    if (!exists) return null;
+
+    if (!exists) {
+        return null;
+    }
 
     await updateClass(id, data);
 
@@ -62,6 +86,15 @@ export const updateClassService = async (id: string, data: UpdateClassDto) => {
 };
 
 // DELETE
-export const deleteClassService = async (id: string) => {
+export const deleteClassService = async (
+    id: string
+) => {
     return await deleteClass(id);
 };
+
+// ```json
+// {
+//   "status": "success",
+//   "message": "Deleted"
+// }
+// ```

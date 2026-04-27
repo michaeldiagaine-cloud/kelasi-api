@@ -7,7 +7,7 @@ import * as userService from '../services/user.service.js';
 export const createUser = async (req: Request, res: Response) => {
     const body: CreateUserDto = req.body;
 
-    if (!body.email || !body.password || !body.firstName || !body.lastName) {
+    if (!body.email || !body.password || !body.firstname || !body.lastname) {
         return errorResponse(res, 'Champs requis manquants', 400);
     }
 
