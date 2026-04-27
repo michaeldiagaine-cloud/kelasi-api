@@ -403,7 +403,7 @@ Récupérer toutes les classes d’une école.
 
 ## Example
 
-```test
+```text
 GET /classes/school/uuid-school
 ```
 
@@ -2151,7 +2151,7 @@ date
 
 ## Example
 
-```json
+```text
 GET /discipline?schoolId=uuid&classId=uuid&level=SUSPENSION
 ```
 
@@ -2188,7 +2188,7 @@ Supprimer un rapport disciplinaire.
 
 ## Example
 
-```json
+```text
 DELETE /discipline/uuid
 ```
 
@@ -2529,7 +2529,7 @@ Récupérer un utilisateur par ID.
 
 ## Example
 
-```json
+```text
 GET /users/uuid-user
 ```
 
@@ -2558,7 +2558,7 @@ Récupérer les utilisateurs d’une école.
 
 ## Example
 
-```json
+```text
 GET /users/school/uuid-school
 ```
 
